@@ -212,6 +212,17 @@
 <li><a href="#_groovy">groovy</a></li>
 </ul>
 </li>
+<li><a href="#_day_08_groovy">Day 08: groovy</a>
+<ul class="sectlevel3">
+<li><a href="#_day_8_seven_segment_seach">Day 8: Seven Segment Seach</a>
+<ul class="sectlevel4">
+<li><a href="#_today_i_learned_4">Today I learned</a></li>
+<li><a href="#_first_star_3">First Star</a></li>
+<li><a href="#_second_star_3">Second Star</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -1089,6 +1100,198 @@ class TheTreacheryOfWhalesTest {
     }
 
 }</code></pre>
+</div>
+</div>
+<a id="day08" />
+</div>
+</div>
+<div class="sect2">
+<h3 id="_day_08_groovy"><a class="anchor" href="#_day_08_groovy"></a><a class="link" href="#_day_08_groovy">Day 08: groovy</a></h3>
+<div class="sect3">
+<h4 id="_day_8_seven_segment_seach"><a class="anchor" href="#_day_8_seven_segment_seach"></a><a class="link" href="#_day_8_seven_segment_seach">Day 8: Seven Segment Seach</a></h4>
+<div class="paragraph">
+<p>This solution is written in Groovy.</p>
+</div>
+<div class="paragraph">
+<p>The original puzzle can be found at <a href="https://adventofcode.com/2021/day/8" class="bare">https://adventofcode.com/2021/day/8</a></p>
+</div>
+<div class="paragraph">
+<p>The working example can be found here <a href="https://github.com/uniqueck/advent-of-code/tree/2021/groovy/src/main/groovy/io/uniqueck/aoc/day8">uniqueck / advent-of-code</a></p>
+</div>
+<div class="sect4">
+<h5 id="_today_i_learned_4"><a class="anchor" href="#_today_i_learned_4"></a><a class="link" href="#_today_i_learned_4">Today I learned</a></h5>
+<div class="paragraph">
+<p>Start with the solution on a sheet of paper ;)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_first_star_3"><a class="anchor" href="#_first_star_3"></a><a class="link" href="#_first_star_3">First Star</a></h5>
+<div class="paragraph">
+<p>We have to count all unique output digits, this mean patterns with size (2,3,4,7)</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-groovy" data-lang="groovy">    static int star1(File input) {
+        int counter = 0
+        input.readLines().each { String line -&gt;
+            println line
+            def (uniqueSignalPatterns, fourDigitOutputValue) = line.tokenize("|")
+            List&lt;String&gt; uniqueSignalPatternsList = uniqueSignalPatterns.tokenize(" ")
+            println uniqueSignalPatternsList
+            List&lt;String&gt; fourDigitOutputValueList = fourDigitOutputValue.tokenize(" ")
+            println fourDigitOutputValueList
+
+            fourDigitOutputValueList.findAll { [2, 3, 4, 7].contains(it.size()) }.each {
+                counter += createCombinations(it).findAll {
+                    uniqueSignalPatternsList.contains(it)
+                }.size()
+            }
+        }
+        return counter
+    }</code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_second_star_3"><a class="anchor" href="#_second_star_3"></a><a class="link" href="#_second_star_3">Second Star</a></h5>
+<div class="paragraph">
+<p>To get the unique numbers I used the groupBy operator with size of the strings and the use a map with key is the digit.
+All not unique digits remain in a list of undetermined patterns.</p>
+</div>
+<div class="paragraph">
+<p>We have to determined based on the unique digits (1,4,7,8) the other digits (0,6,9) and (2,3,5).</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s easy to determine the 6, because we know the bits for digit 1 and one bit is not part of the 6, but both bits are part of 0 and 9.</p>
+</div>
+<div class="paragraph">
+<p>The same solution works for 3 with a little difference, because we have to check if both bits are part of 3.</p>
+</div>
+<div class="paragraph">
+<p>If we have determined the 3, we can determine based on the 3 the 9 and the last missing pattern is 0.</p>
+</div>
+<div class="paragraph">
+<p>So only 2 and 5 are missing. Here we have to use the determined digits 1,6 and 9 to determine the 5. Why?
+We have to check which bit from digit 1 is not part of digit 6. We eliminate this bit from digit 9 and compare it with the last patterns. The match is 5, the remaining pattern is the two.</p>
+</div>
+<div class="paragraph">
+<p>After this, we can decode the four output patterns and sum it up.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight linenums"><code class="language-groovy" data-lang="groovy">    static int star2(File input) {
+
+        int sum = 0
+        input.readLines().each { String line -&gt;
+            def (uniqueSignalPatterns, fourDigitOutputValue) = line.tokenize("|")
+
+            println "UniqueSignalPatterns: ${uniqueSignalPatterns}"
+            println "FourDigitOutputValue: ${fourDigitOutputValue}"
+
+            def signalsForDigit = [:] as Map&lt;Integer, String&gt;
+            def notDeterminedSignals = [] as List&lt;String&gt;
+            uniqueSignalPatterns.trim().split(" ").collect { it.split("").sort().join() }.groupBy { it.size() }.each {
+
+                switch (it.key) {
+                    case 2: {
+                        signalsForDigit[1] = it.value[0]
+                        break
+                    }
+                    case 4: {
+                        signalsForDigit[4] = it.value[0]
+                        break
+                    }
+                    case 3: {
+                        signalsForDigit[7] = it.value[0]
+                        break
+                    }
+                    case 7: {
+                        signalsForDigit[8] = it.value[0]
+                        break
+                    }
+                    default: {
+                        notDeterminedSignals += it.value
+                    }
+                }
+            }
+
+            println "determined signals after unique signals - start"
+            println "determined signals: $signalsForDigit"
+            println "not determined signals: $notDeterminedSignals"
+            println "determined signals after unique signals - end"
+
+            while (notDeterminedSignals) {
+                notDeterminedSignals.each { String notDetermined -&gt;
+                    switch (notDetermined.size()) {
+                        case 5: {
+                            // check if already determined 1 is part of pattern, so we found the 3
+                            if (notDetermined.contains(signalsForDigit[1][0]) &amp;&amp; notDetermined.contains(signalsForDigit[1][1])) {
+                                signalsForDigit[3] = notDetermined
+                            } else
+                            // if already determined 6 and 9, we can determined together with the 1 the last to remaining
+                            if (signalsForDigit[6] &amp;&amp; signalsForDigit[9] &amp;&amp; signalsForDigit[1]) {
+
+                                // check which bit from 1 is not part of 6
+                                println signalsForDigit[6]
+                                println signalsForDigit[1][0]
+                                println signalsForDigit[1][1]
+                                String signalForDigit6 = signalsForDigit[6]
+                                String bit = signalForDigit6.contains(signalsForDigit[1][0]) ? signalsForDigit[1][1] : signalsForDigit[1][0]
+                                println "Bit ${bit} is not part of 6"
+                                // remove these bit from 9 and compare it with the current undetermined signal, if it succeed we found the 5
+                                if (signalsForDigit[9].replace(bit, "") == notDetermined) {
+                                    signalsForDigit[5] = notDetermined
+                                } else {
+                                    signalsForDigit[2] = notDetermined
+                                }
+                            }
+
+                            break;
+                        }
+                        case 6: {
+                            // can be 0,9,6
+                            // check if already determined 1 is not part of pattern, so we found the 6
+                            if (!(notDetermined.contains(signalsForDigit[1][0]) &amp;&amp; notDetermined.contains(signalsForDigit[1][1]))) {
+                                signalsForDigit[6] = notDetermined
+                            } else
+                            // if 3 is already determined, we can determine 9
+                            if (signalsForDigit[3]
+                                    &amp;&amp; notDetermined.contains(signalsForDigit[3][0])
+                                    &amp;&amp; notDetermined.contains(signalsForDigit[3][1])
+                                    &amp;&amp; notDetermined.contains(signalsForDigit[3][2])
+                                    &amp;&amp; notDetermined.contains(signalsForDigit[3][3])
+                                    &amp;&amp; notDetermined.contains(signalsForDigit[3][4])
+                            ) {
+                                signalsForDigit[9] = notDetermined
+                            } else
+                            // if 9 and 6 is already determined, the last 6 signal digit is 0
+                            if (signalsForDigit[6] &amp;&amp; signalsForDigit[9]) {
+                                signalsForDigit[0] = notDetermined
+                            }
+                        }
+                    }
+                }
+                // remove all determined signals from unknown signals
+                notDeterminedSignals.removeAll(signalsForDigit.values())
+                println "determined signals: $signalsForDigit"
+                println "not determined signals: $notDeterminedSignals"
+            }
+
+
+            String tempValue = ""
+            fourDigitOutputValue.trim().split(" ").collect {it.split("").sort().join()}.each {String outputPart -&gt;
+                println "Search for $outputPart"
+                tempValue += signalsForDigit.find {it.value == outputPart}.key
+            }
+            println "Decoded Output Signal $tempValue"
+            sum += tempValue as Integer
+
+
+        }
+
+        return sum
+    }</code></pre>
+</div>
 </div>
 </div>
 </div>
